@@ -1,20 +1,8 @@
-
-import {
-    PlayerRole,
-    PlayerMatch,
-    IPlayerAttributesMatch,
-    SpecializationMatrix,
-    TeamMatch,
-    IMatchState,
-    MatchEngine,
-    DynamicStrategy,
-    StatsMatch,
-    Coach,
-    CoachRole,
-    CoachSpecialty,
-    ICoachAttributes,
-    CoachingStaff
-} from './MatchModels';
+import { Coach, ICoachAttributes, CoachingStaff } from "./MatchModels/Coaches";
+import { MatchEngine } from "./MatchModels/GameEngine";
+import { PlayerMatch, TeamMatch } from "./MatchModels/Players";
+import { PlayerStats, StatsMatch } from "./MatchModels/Statistics";
+import { PlayerRole, IPlayerAttributesMatch, SpecializationMatrix, DynamicStrategy, CoachRole, CoachSpecialty, IMatchState } from "./MatchModels/Types";
 
 // --- 1. FUNCIÓN DE AYUDA: CREACIÓN DE JUGADORES Y EQUIPOS ---
 
@@ -459,10 +447,11 @@ while (state.timeRemaining > 0) {
             if (state.offenseYardLine >= 100) {
                 // Touchdown!
                 console.log("¡TOUCHDOWN! 🤩");
+                let driveScore = 6;
                 if (offensiveTeam === teamA) {
-                    currentScoreA += 6; // 6 puntos por touchdown
+                    currentScoreA += driveScore; // 6 puntos por touchdown
                 } else {
-                    currentScoreB += 6;
+                    currentScoreB += driveScore;
                 }
 
                 // Registrar touchdown en estadísticas
@@ -472,6 +461,7 @@ while (state.timeRemaining > 0) {
                 const extraPointResult = MatchEngine.executeSpecialPlay('ExtraPoint', offensiveTeam, state);
                 console.log(extraPointResult.description);
                 if (extraPointResult.success) {
+                    driveScore += 1;
                     if (offensiveTeam === teamA) {
                         currentScoreA += 1;
                     } else {
@@ -482,7 +472,7 @@ while (state.timeRemaining > 0) {
 
                 // Finalizar serie actual
                 if (currentDriveStarted) {
-                    matchStats.endCurrentDrive(offensiveTeam.data.name, state.offenseYardLine, 'Touchdown', 7, state.timeRemaining);
+                    matchStats.endCurrentDrive(offensiveTeam.data.name, state.offenseYardLine, 'Touchdown', driveScore, state.timeRemaining);
                     currentDriveStarted = false;
                 }
 
@@ -499,7 +489,7 @@ while (state.timeRemaining > 0) {
                 // Primer Down conseguido
                 console.log(`¡PRIMER DOWN! 🎉 La ofensiva avanza. Ahora en Yarda ${Math.round(state.offenseYardLine)}.`);
                 state.down = 1;
-                state.yardsToGo = 10;
+                state.yardsToGo = Math.min(10, 100 - state.offenseYardLine);
             }
         }
         // 2. Turnover on Downs (Pérdida de Posesión en 4to Down)
