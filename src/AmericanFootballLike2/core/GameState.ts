@@ -25,8 +25,8 @@ export interface GlobalMatchContext {
   totalTimeElapsed: number;      // Tiempo total transcurrido
 
   // Posesión
-  possessionTeam: Team;
-  defendingTeam: Team;
+  possessionTeam: TeamMatch;
+  defendingTeam: TeamMatch;
 
   // Timeouts
   timeoutsRemainingX: number;    // 0-3 por tiempo
