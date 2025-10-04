@@ -2,6 +2,7 @@
 // Basado en la documentación: Contexto Global, Contexto de Serie, Contexto de Jugada
 
 import { Player } from "./Player";
+import { TeamMatch } from "../teams/TeamMatch";
 
 // ===== NIVEL 1: CONTEXTO GLOBAL DEL PARTIDO =====
 

@@ -1,10 +1,13 @@
 // SimpleMatch - Flujo completo de partido integrando con el sistema existente
-// Usa ExpandedPlayState, PlayResult y el sistema completo de acciones
+// Usa ExpandedPlayState, PlayResult, Drive, Play y Actions para simulación completa
 
 import { TeamMatch } from '../teams/TeamMatch';
 import { ExpandedPlayState, SimpleGameState } from './ExpandedPlayState';
 import { PlayResult, PlayResultAnalyzer, KickoffResult, PuntResult, KickResult, Touchdown } from './PlayResults';
-import { RunningPlayAction, PassingPlayAction } from './Actions';
+import { RunningPlayAction, PassingPlayAction, ActionAnalyzer, ActionResult } from './Actions';
+import { Drive, DriveConfig } from './Drive';
+import { Play, PlayConfig } from './Play';
+import { ActionCalculator, PlayContext } from './ActionCalculator';
 import { OffensiveTeam } from '../teams/units/OffensiveTeam';
 import { DefensiveTeam } from '../teams/units/DefensiveTeam';
 import { KickerTeam } from '../teams/units/KickerTeam';
@@ -29,6 +32,12 @@ export class SimpleMatch {
   public expandedState: ExpandedPlayState;
   public totalPlays: number = 0;
   public totalDrives: number = 0;
+
+  // Nuevas propiedades para Drive, Play y Actions
+  public drives: Drive[] = [];
+  public currentDrive: Drive | null = null;
+  public plays: Play[] = [];
+  public gameActions: (RunningPlayAction | PassingPlayAction)[] = [];
 
   constructor(teamX: TeamMatch, teamY: TeamMatch) {
     this.teamX = teamX;
@@ -69,6 +78,41 @@ export class SimpleMatch {
   public initializeMatch(): void {
     this.state.gamePhase = 'kickoff';
     this.totalDrives = 1;
+  }
+
+  /**
+   * Iniciar un nuevo drive
+   */
+  private startNewDrive(): void {
+    // Finalizar drive anterior si existe
+    if (this.currentDrive && !this.currentDrive.isFinalized) {
+      this.finalizeDrive('turnover');
+    }
+
+    const offensiveTeam = this.state.possession === 'X' ? this.teamX : this.teamY;
+    const defensiveTeam = this.state.possession === 'X' ? this.teamY : this.teamX;
+
+    const driveConfig: DriveConfig = {
+      offensiveTeam,
+      defensiveTeam,
+      startPosition: this.state.ballPosition,
+      startTime: this.state.timeRemaining,
+      quarter: this.state.quarter
+    };
+
+    this.currentDrive = new Drive(driveConfig);
+    this.drives.push(this.currentDrive);
+    this.totalDrives++;
+  }
+
+  /**
+   * Finalizar el drive actual
+   */
+  private finalizeDrive(result: 'touchdown' | 'turnover' | 'punt' | 'field_goal' | 'end_of_half'): void {
+    if (this.currentDrive && !this.currentDrive.isFinalized) {
+      this.currentDrive.endTime = this.state.timeRemaining;
+      this.currentDrive.finalize(result);
+    }
   }
 
   /**
@@ -196,35 +240,50 @@ export class SimpleMatch {
   }
 
   /**
-   * Ejecutar jugada usando el sistema completo con Actions y staff técnico
+   * Ejecutar jugada usando Play, Actions y el sistema completo
    */
   public executePlay(offense: OffensiveTeam, defense: DefensiveTeam, playType: string, offensivePlayStyle?: string): PlayResult {
     this.totalPlays++;
 
+    // Asegurar que hay un drive activo para jugadas normales
+    if (!this.currentDrive && playType !== 'kickoff' && this.state.gamePhase === 'normal') {
+      this.startNewDrive();
+    }
+
+    // Crear objeto Play para esta jugada
+    const playConfig: PlayConfig = {
+      offense: offense as any, // Conversión temporal
+      defense: defense as any, // Conversión temporal
+      playType,
+      down: this.state.down,
+      yardsToGo: this.state.yardsToGo,
+      ballPosition: this.state.ballPosition
+    };
+
+    const play = new Play(playConfig);
+    this.plays.push(play);
+
     let result: PlayResult;
+    let action: RunningPlayAction | PassingPlayAction | undefined;
 
     const offensiveTeam = this.state.possession === 'X' ? this.teamX : this.teamY;
     const defensiveTeam = this.state.possession === 'X' ? this.teamY : this.teamX;
 
     // Manejar jugadas especiales de tempo
     if (playType === 'kneel') {
-      return this.executeKneelDown();
+      result = this.executeKneelDown();
     } else if (playType === 'spike') {
-      return this.executeSpike();
+      result = this.executeSpike();
     } else if (playType === 'extra_point') {
-      const kickResult = this.executeExtraPoint();
-      return kickResult;
+      result = this.executeExtraPoint();
     } else if (playType === 'two_point_conversion') {
-      return this.executeTwoPointConversion();
-    }
-
-    // Manejar diferentes tipos de jugadas normales
-    if (playType === 'punt') {
+      result = this.executeTwoPointConversion();
+    } else if (playType === 'punt') {
       result = this.executePunt(offense, defense);
     } else if (playType === 'field_goal') {
       result = this.executeFieldGoal(offense);
     } else {
-      // Jugadas normales (go_for_it, normal, etc.)
+      // Jugadas normales usando Actions
       const situationDown = playType === 'go_for_it' ? 3 : this.state.down;
       const offensiveDecision = offensiveTeam.createOffensiveAction(offense, defense, {
         down: situationDown,
@@ -234,7 +293,8 @@ export class SimpleMatch {
         scoreDifference: this.state.scoreX - this.state.scoreY
       });
 
-      const action = offensiveDecision.action;
+      action = offensiveDecision.action;
+      this.gameActions.push(action); // Registrar la acción
 
       // El equipo defensivo crea su respuesta
       const expectedAction = action.actionType === 'running' ? 'run' : 'pass';
@@ -254,27 +314,131 @@ export class SimpleMatch {
       // Aplicar modificadores de realismo basados en el contexto del juego
       const realismModifiers = this.calculateRealismModifiers();
 
-      // Ejecutar la action con todos los modificadores
+      // Crear contexto de la jugada para el calculador
+      const playContext: PlayContext = {
+        down: this.state.down,
+        yardsToGo: this.state.yardsToGo,
+        fieldPosition: this.state.ballPosition,
+        timeRemaining: this.state.timeRemaining,
+        quarter: this.state.quarter,
+        scoreDifference: this.state.scoreX - this.state.scoreY,
+        weather: 'clear', // Simplificado por ahora
+        pressure: this.calculatePressureLevel()
+      };
+
+      // Ejecutar la action usando el nuevo sistema de cálculo
+      let detailedResult;
       if (action.actionType === 'running') {
-        result = this.executeRunningActionWithModifiers(
+        detailedResult = ActionCalculator.calculateRunningAction(
           action as RunningPlayAction,
           offense,
           defense,
-          { ...defensiveResponse.adjustments, ...realismModifiers },
-          actionEvaluation.teamAttributeBonus
+          playContext
         );
       } else {
-        result = this.executePassingActionWithModifiers(
+        detailedResult = ActionCalculator.calculatePassingAction(
           action as PassingPlayAction,
           offense,
           defense,
-          { ...defensiveResponse.adjustments, ...realismModifiers },
-          actionEvaluation.teamAttributeBonus
+          playContext
         );
+      }
+
+      // Usar el resultado calculado
+      result = detailedResult.playResult;
+
+      // Crear ActionResult usando los datos del calculador detallado
+      const yardsGained = this.extractYardsFromResult(result);
+      const actionResult: ActionResult = {
+        yardsGained,
+        timeConsumed: 35, // Tiempo promedio
+        firstDownAchieved: yardsGained >= this.state.yardsToGo,
+        touchdownScored: result.type === 'touchdown',
+        turnoverOccurred: result.type === 'fumble' || result.type === 'interception',
+        executionQuality: this.determineExecutionQuality(detailedResult.calculation.successProbability),
+        impactOnMomentum: this.determineMomentumImpact(yardsGained, result.type),
+        keyFactors: this.extractKeyFactors(detailedResult),
+        playmakers: [], // Simplificado por ahora
+        goats: [] // Simplificado por ahora
+      };
+
+      // Actualizar el Play con el resultado usando la narrativa del calculador
+      play.result = {
+        yardsGained: actionResult.yardsGained,
+        timeElapsed: actionResult.timeConsumed,
+        isFirstDown: actionResult.firstDownAchieved,
+        isScore: actionResult.touchdownScored,
+        isTurnover: actionResult.turnoverOccurred,
+        points: actionResult.touchdownScored ? 6 : 0,
+        description: detailedResult.narrative || ActionAnalyzer.generateActionDescription(action, actionResult)
+      };
+
+      // Agregar la jugada al drive actual (solo si no está finalizado)
+      if (this.currentDrive && !this.currentDrive.isFinalized) {
+        this.currentDrive.addPlay(play);
       }
     }
 
     return result;
+  }
+
+  /**
+   * Extraer yardas de un PlayResult
+   */
+  private extractYardsFromResult(result: PlayResult): number {
+    if ('yardsGained' in result) {
+      return result.yardsGained;
+    }
+    const stats = PlayResultAnalyzer.extractStats(result);
+    return Math.round(stats.yards);
+  }
+
+  /**
+   * Determinar calidad de ejecución basada en probabilidad de éxito
+   */
+  private determineExecutionQuality(successProbability: number): 'poor' | 'fair' | 'good' | 'excellent' {
+    if (successProbability >= 80) return 'excellent';
+    if (successProbability >= 60) return 'good';
+    if (successProbability >= 40) return 'fair';
+    return 'poor';
+  }
+
+  /**
+   * Determinar impacto en momentum basado en resultado
+   */
+  private determineMomentumImpact(yardsGained: number, resultType: string): 'negative' | 'neutral' | 'positive' | 'game_changing' {
+    if (resultType === 'touchdown') return 'game_changing';
+    if (resultType === 'fumble' || resultType === 'interception') return 'negative';
+    if (yardsGained >= 15) return 'positive';
+    if (yardsGained >= this.state.yardsToGo) return 'positive';
+    if (yardsGained < 0) return 'negative';
+    return 'neutral';
+  }
+
+  /**
+   * Extraer factores clave del cálculo detallado
+   */
+  private extractKeyFactors(detailedResult: any): string[] {
+    const factors: string[] = [];
+    
+    if (detailedResult.calculation.matchupAdvantage > 10) {
+      factors.push('Ventaja ofensiva clara');
+    } else if (detailedResult.calculation.matchupAdvantage < -10) {
+      factors.push('Ventaja defensiva clara');
+    }
+    
+    const modifiers = detailedResult.calculation.modifiers;
+    if (modifiers.pressureModifier < -2) {
+      factors.push('Alta presión situacional');
+    }
+    if (modifiers.weatherPenalty < -2) {
+      factors.push('Condiciones climáticas adversas');
+    }
+    if (modifiers.momentumBonus > 2) {
+      factors.push('Momentum favorable');
+    }
+    
+    return factors;
   }
 
   /**
@@ -353,6 +517,9 @@ export class SimpleMatch {
 
     // Manejar situaciones especiales
     if (stats.touchdown || result.type === 'touchdown') {
+      // Finalizar drive con touchdown
+      this.finalizeDrive('touchdown');
+
       // Touchdown - ejecutar conversión automáticamente
       const conversionDecision = this.handlePostTouchdown();
 
@@ -377,23 +544,50 @@ export class SimpleMatch {
         }
       }
 
-      // Preparar para kickoff - el equipo que anotó patea
+      // Preparar para kickoff - el equipo que NO anotó patea
       this.state.gamePhase = 'kickoff';
       this.state.ballPosition = 35; // Kickoff desde la 35
       this.state.down = 0; // Kickoff no tiene down
       this.state.yardsToGo = 0; // Kickoff no tiene yardsToGo
-      // NO cambiar posesión aquí - el equipo que anotó mantiene posesión para patear
+      // Cambiar posesión: el equipo que NO anotó patea
+      this.state.possession = this.state.possession === 'X' ? 'Y' : 'X';
 
-    } else if (result.type === 'kick_result' || result.type === 'two_point_conversion') {
+    } else if (result.type === 'kick_result') {
+      const kickResult = result as any;
+      if (kickResult.kickType === 'field_goal' && kickResult.result === 'made') {
+        // Finalizar drive con field goal exitoso
+        this.finalizeDrive('field_goal');
+      } else {
+        // Field goal fallado - cambio de posesión
+        this.finalizeDrive('turnover');
+        this.changePossessionWithFieldFlip();
+      }
+
       // Después de conversión - preparar para kickoff
       this.state.gamePhase = 'kickoff';
       this.state.ballPosition = 35; // Kickoff desde la 35
       this.state.down = 0; // Kickoff no tiene down
       this.state.yardsToGo = 0; // Kickoff no tiene yardsToGo
-      // NO cambiar posesión aquí - el equipo que anotó mantiene posesión para patear
+      // Cambiar posesión: el equipo que NO anotó patea
+      this.state.possession = this.state.possession === 'X' ? 'Y' : 'X';
+
+    } else if (result.type === 'two_point_conversion') {
+      // Después de conversión - preparar para kickoff
+      this.state.gamePhase = 'kickoff';
+      this.state.ballPosition = 35; // Kickoff desde la 35
+      this.state.down = 0; // Kickoff no tiene down
+      this.state.yardsToGo = 0; // Kickoff no tiene yardsToGo
+      // Cambiar posesión: el equipo que NO anotó patea
+      this.state.possession = this.state.possession === 'X' ? 'Y' : 'X';
+
+    } else if (result.type === 'punt_result') {
+      // Finalizar drive con punt
+      this.finalizeDrive('punt');
+      this.changePossessionWithFieldFlip();
 
     } else if (stats.turnover) {
-      // Turnover - cambio de posesión con inversión de campo
+      // Finalizar drive con turnover
+      this.finalizeDrive('turnover');
       this.changePossessionWithFieldFlip();
 
     } else {
@@ -411,6 +605,7 @@ export class SimpleMatch {
 
         // Si es 4to down y no convirtieron, cambio de posesión con inversión de campo
         if (this.state.down > 4) {
+          this.finalizeDrive('turnover');
           this.changePossessionWithFieldFlip();
         }
       }
@@ -425,7 +620,9 @@ export class SimpleMatch {
     this.state.down = 1;
     this.state.yardsToGo = 10;
     // NO invertir la posición del balón automáticamente - esto se maneja según el contexto
-    this.totalDrives++;
+
+    // Iniciar nuevo drive
+    this.startNewDrive();
   }
 
   /**
@@ -436,7 +633,9 @@ export class SimpleMatch {
     this.state.down = 1;
     this.state.yardsToGo = 10;
     this.state.ballPosition = 100 - this.state.ballPosition; // Invertir campo
-    this.totalDrives++;
+
+    // Iniciar nuevo drive
+    this.startNewDrive();
   }
 
   /**
@@ -510,6 +709,31 @@ export class SimpleMatch {
   }
 
   /**
+   * Calcular el nivel de presión actual del juego
+   */
+  private calculatePressureLevel(): 'low' | 'medium' | 'high' | 'extreme' {
+    let pressurePoints = 0;
+
+    // Factores que aumentan la presión
+    if (this.state.quarter >= 4) pressurePoints += 2;
+    if (this.state.timeRemaining <= 120) pressurePoints += 2; // Últimos 2 minutos
+    if (this.state.down >= 3) pressurePoints += 1;
+    if (this.state.down === 4) pressurePoints += 2;
+    
+    const scoreDiff = Math.abs(this.state.scoreX - this.state.scoreY);
+    if (scoreDiff <= 7) pressurePoints += 1; // Juego cerrado
+    
+    if (this.state.ballPosition >= 80) pressurePoints += 1; // Zona roja
+    if (this.state.ballPosition <= 20) pressurePoints += 1; // Campo propio
+
+    // Determinar nivel de presión
+    if (pressurePoints >= 6) return 'extreme';
+    if (pressurePoints >= 4) return 'high';
+    if (pressurePoints >= 2) return 'medium';
+    return 'low';
+  }
+
+  /**
    * Obtener contexto del juego
    */
   private getGameContext(): string {
@@ -558,6 +782,9 @@ export class SimpleMatch {
     const kickingTeamName = this.state.possession === 'X' ? this.teamX.name : this.teamY.name;
     const kickoffResult = this.executeKickoff();
     const receivingTeamName = this.state.possession === 'X' ? this.teamX.name : this.teamY.name;
+
+    // Iniciar el primer drive después del kickoff
+    this.startNewDrive();
 
     gameLog.push({
       quarter: this.state.quarter,
@@ -916,8 +1143,92 @@ export class SimpleMatch {
     return {
       finalScore: { teamX: this.state.scoreX, teamY: this.state.scoreY },
       totalPlays: this.totalPlays,
-      totalDrives: this.totalDrives,
+      totalDrives: this.drives.length,
       winner
     };
+  }
+
+  /**
+   * Obtener estadísticas detalladas de drives
+   */
+  public getDriveStats(): {
+    totalDrives: number;
+    successfulDrives: number;
+    averageYardsPerDrive: number;
+    averagePlaysPerDrive: number;
+    longestDrive: Drive | null;
+    drivesByTeam: { [teamName: string]: Drive[] };
+  } {
+    const successfulDrives = this.drives.filter(drive => drive.isSuccessful()).length;
+    const totalYards = this.drives.reduce((sum, drive) => sum + drive.getStats().totalYards, 0);
+    const totalPlays = this.drives.reduce((sum, drive) => sum + drive.getStats().totalPlays, 0);
+
+    const longestDrive = this.drives.reduce((longest, current) => {
+      const currentStats = current.getStats();
+      const longestStats = longest ? longest.getStats() : { totalPlays: 0 };
+      return currentStats.totalPlays > longestStats.totalPlays ? current : longest;
+    }, null as Drive | null);
+
+    const drivesByTeam: { [teamName: string]: Drive[] } = {};
+    this.drives.forEach(drive => {
+      const teamName = drive.offensiveTeam.name;
+      if (!drivesByTeam[teamName]) {
+        drivesByTeam[teamName] = [];
+      }
+      drivesByTeam[teamName].push(drive);
+    });
+
+    return {
+      totalDrives: this.drives.length,
+      successfulDrives,
+      averageYardsPerDrive: this.drives.length > 0 ? totalYards / this.drives.length : 0,
+      averagePlaysPerDrive: this.drives.length > 0 ? totalPlays / this.drives.length : 0,
+      longestDrive,
+      drivesByTeam
+    };
+  }
+
+  /**
+   * Obtener análisis de acciones del partido
+   */
+  public getActionAnalysis(): {
+    totalActions: number;
+    runningActions: number;
+    passingActions: number;
+    averageExpectedYards: number;
+    mostCommonPlayTypes: { [playType: string]: number };
+  } {
+    const runningActions = this.gameActions.filter(action => action.actionType === 'running').length;
+    const passingActions = this.gameActions.filter(action => action.actionType === 'passing').length;
+
+    const totalExpectedYards = this.gameActions.reduce((sum, action) => sum + action.expectedYards, 0);
+    const averageExpectedYards = this.gameActions.length > 0 ? totalExpectedYards / this.gameActions.length : 0;
+
+    const playTypeCounts: { [playType: string]: number } = {};
+    this.gameActions.forEach(action => {
+      const playType = action.playType;
+      playTypeCounts[playType] = (playTypeCounts[playType] || 0) + 1;
+    });
+
+    return {
+      totalActions: this.gameActions.length,
+      runningActions,
+      passingActions,
+      averageExpectedYards,
+      mostCommonPlayTypes: playTypeCounts
+    };
+  }
+
+  /**
+   * Obtener resumen de jugadas destacadas
+   */
+  public getHighlightPlays(): Play[] {
+    return this.plays.filter(play => {
+      const result = play.result;
+      return result.isScore ||
+        result.isTurnover ||
+        Math.abs(result.yardsGained) >= 15 ||
+        (play.down === 4 && result.isFirstDown);
+    });
   }
 }

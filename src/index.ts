@@ -2,7 +2,7 @@
 
 
 import { runMobaGameSimulation } from "./MobaLike"
-runMobaGameSimulation()
+// runMobaGameSimulation()
 
 import { runAmericanFootballSimulation } from "./AmericanFootballLike2";
-// runAmericanFootballSimulation();
+runAmericanFootballSimulation();
