@@ -97,8 +97,8 @@ export function runAmericanFootballSimulation(): void {
     console.log("=".repeat(60));
     
     // 1. Crear equipos de ejemplo
-    const teamX = createEliteTeam("Águilas");
-    const teamY = createDefensiveTeam("Lobos", "poor");
+    const teamX = createEliteTeam("Águilas");  // Equipo completamente élite
+    const teamY = createDefensiveTeam("Lobos", "poor");  // Equipo defensivo pobre
     
     console.log(`\n📋 EQUIPOS CREADOS:`);
     displayTeamAttributes(teamX);

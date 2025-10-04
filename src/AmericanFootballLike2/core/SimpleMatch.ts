@@ -677,10 +677,20 @@ export class SimpleMatch {
   }
 
   /**
-   * Obtener estrategia ofensiva basada en la situación
+   * Obtener estrategia ofensiva basada en la situación y decisión real del coaching staff
    */
-  private getOffensiveStrategy(down: number, yardsToGo: number, ballPosition: number): string {
+  private getOffensiveStrategy(down: number, yardsToGo: number, ballPosition: number, actualPlayType?: string): string {
     if (down === 4) {
+      // Usar la decisión real del coaching staff si está disponible
+      if (actualPlayType === 'punt') {
+        return "Punt - coaching staff decidió despejar";
+      } else if (actualPlayType === 'field_goal') {
+        return "Field goal - coaching staff decidió intentar 3 puntos";
+      } else if (actualPlayType === 'go_for_it') {
+        return "Ir por el primer down - coaching staff decidió arriesgar";
+      }
+      
+      // Fallback a lógica anterior si no hay decisión específica
       if (ballPosition >= 65) return "Intentar field goal - dentro del rango";
       if (yardsToGo <= 2) return "Ir por el primer down - situación crítica";
       return "Punt - demasiado arriesgado intentar";
@@ -693,10 +703,20 @@ export class SimpleMatch {
   }
 
   /**
-   * Obtener estrategia defensiva basada en la situación
+   * Obtener estrategia defensiva basada en la situación y decisión ofensiva
    */
-  private getDefensiveStrategy(down: number, yardsToGo: number, ballPosition: number): string {
+  private getDefensiveStrategy(down: number, yardsToGo: number, ballPosition: number, offensivePlayType?: string): string {
     if (down === 4) {
+      // Responder a la decisión ofensiva real
+      if (offensivePlayType === 'punt') {
+        return "Cobertura de punt - preparar return";
+      } else if (offensivePlayType === 'field_goal') {
+        return "Bloquear field goal - presión total";
+      } else if (offensivePlayType === 'go_for_it') {
+        return "Detener en línea - no permitir primer down";
+      }
+      
+      // Fallback a lógica anterior
       if (ballPosition >= 65) return "Bloquear field goal - presión total";
       if (yardsToGo <= 2) return "Detener en línea - no permitir primer down";
       return "Cobertura de punt - preparar return";
@@ -815,7 +835,10 @@ export class SimpleMatch {
         quarterPlayCount = 0;
       }
 
-      // Capturar estado ANTES de la jugada
+      // Seleccionar jugada PRIMERO para obtener la decisión real
+      const { offense, defense, playType, offensivePlayStyle } = this.selectPlay();
+
+      // Capturar estado ANTES de la jugada CON la decisión real
       const prePlayState = {
         quarter: this.state.quarter,
         time: this.formatTime(this.state.timeRemaining),
@@ -824,13 +847,10 @@ export class SimpleMatch {
         ballPosition: this.state.ballPosition,
         possession: this.state.possession === 'X' ? this.teamX.name : this.teamY.name,
         score: { teamX: this.state.scoreX, teamY: this.state.scoreY },
-        offensiveStrategy: this.getOffensiveStrategy(this.state.down, this.state.yardsToGo, this.state.ballPosition),
-        defensiveStrategy: this.getDefensiveStrategy(this.state.down, this.state.yardsToGo, this.state.ballPosition),
+        offensiveStrategy: this.getOffensiveStrategy(this.state.down, this.state.yardsToGo, this.state.ballPosition, playType),
+        defensiveStrategy: this.getDefensiveStrategy(this.state.down, this.state.yardsToGo, this.state.ballPosition, playType),
         gameContext: this.getGameContext()
       };
-
-      // Seleccionar jugada
-      const { offense, defense, playType, offensivePlayStyle } = this.selectPlay();
 
       // Ejecutar jugada
       const result = this.executePlay(offense, defense, playType, offensivePlayStyle);
@@ -1114,6 +1134,12 @@ export class SimpleMatch {
   }
 
   private checkSpecialConditions(): 'continue' | 'new_drive' | 'kickoff' | 'end_game' {
+    // Verificar si necesitamos kickoff (después de anotación o touchdown)
+    if (this.state.gamePhase === 'kickoff') {
+      return 'kickoff';
+    }
+
+    // Verificar si el balón llegó a la zona de anotación
     if (this.state.ballPosition >= 100) {
       return 'kickoff';
     }

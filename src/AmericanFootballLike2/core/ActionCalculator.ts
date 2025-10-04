@@ -150,13 +150,13 @@ export class ActionCalculator {
 
     if (context.yardsToGo <= 2) {
       // Situación de yardas cortas - más conservador
-      baseYards = 2 + (matchupAdvantage / 25); // 0-6 yardas típicamente
+      baseYards = 2 + (matchupAdvantage / 15); // Mayor impacto de la ventaja
     } else if (context.yardsToGo >= 8) {
       // Situación de yardas largas - más agresivo pero arriesgado
-      baseYards = 1 + (matchupAdvantage / 20); // -4 a +6 yardas típicamente
+      baseYards = 1 + (matchupAdvantage / 12); // Mayor impacto de la ventaja
     } else {
       // Situación normal
-      baseYards = 3 + (matchupAdvantage / 20); // -2 a +8 yardas típicamente
+      baseYards = 3 + (matchupAdvantage / 12); // Mayor impacto de la ventaja
     }
 
     // Ajuste por tipo específico de jugada
@@ -306,7 +306,7 @@ export class ActionCalculator {
     const defensiveRating = (pressManCoverage + zoneCoverageCoordination + fourManRushPressure) / 3;
 
     const matchupAdvantage = offensiveRating - defensiveRating;
-    const completionProbability = Math.max(0.3, Math.min(0.9, 0.6 + (matchupAdvantage / 200)));
+    const completionProbability = Math.max(0.3, Math.min(0.9, 0.6 + (matchupAdvantage / 100))); // Mayor impacto de la ventaja
 
     const modifiers = this.calculatePlayModifiers(context, action, offense, defense);
 
@@ -316,7 +316,7 @@ export class ActionCalculator {
 
     if (Math.random() < completionProbability) {
       // Pase completo
-      finalYards = Math.round(Math.max(1, action.expectedYards + (matchupAdvantage / 10) + modifiers.situationalBonus));
+      finalYards = Math.round(Math.max(1, action.expectedYards + (matchupAdvantage / 6) + modifiers.situationalBonus)); // Mayor impacto de la ventaja
 
       if (context.fieldPosition + finalYards >= 100) {
         playResult = {
@@ -341,7 +341,7 @@ export class ActionCalculator {
       }
     } else {
       // Pase incompleto o intercepción
-      const interceptionProbability = Math.max(0.02, 0.05 - (matchupAdvantage / 500));
+      const interceptionProbability = Math.max(0.02, 0.05 - (matchupAdvantage / 250)); // Mayor impacto de la ventaja
 
       if (Math.random() < interceptionProbability) {
         playResult = {

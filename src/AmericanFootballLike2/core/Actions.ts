@@ -42,7 +42,7 @@ export interface RunningPlayAction {
     purpose: 'control_clock' | 'wear_down_defense' | 'exploit_speed' | 'short_yardage' | 'goal_line';
     riskLevel: 'low' | 'medium' | 'high';
     expectedYards: number;         // Yardas esperadas
-    
+
     // Información del equipo (no jugadores específicos)
     teamStrength: number;          // Fuerza ofensiva del equipo para esta jugada
 }
@@ -90,7 +90,7 @@ export interface PassingPlayAction {
     riskLevel: 'low' | 'medium' | 'high';
     expectedYards: number;
     completionProbability: number; // 0-100%
-    
+
     // Información del equipo (no jugadores específicos)
     teamPassingStrength: number;   // Fuerza de pase del equipo
 }
