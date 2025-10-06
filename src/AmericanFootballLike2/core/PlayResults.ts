@@ -334,6 +334,65 @@ export interface TwoPointConversion {
   gameImpact: 'routine' | 'important' | 'crucial' | 'game_deciding';
 }
 
+// ===== NUEVOS RESULTADOS PARA ACCIONES ESPECIALES =====
+
+// Resultado de acción de tempo
+export interface TempoChange {
+  type: 'tempo_change';
+  tempoType: 'huddle' | 'no_huddle' | 'hurry_up' | 'two_minute_drill' | 'delay_game';
+  effectiveness: number;        // 0-100
+  fatigueImpact: number;       // Impacto en fatiga
+  timeImpact: number;          // Impacto en tiempo
+}
+
+// Resultado de formación defensiva
+export interface DefensiveFormation {
+  type: 'defensive_formation';
+  formation: '4-3' | '3-4' | 'nickel' | 'dime' | 'quarter' | 'goal_line' | '46' | 'bear';
+  effectiveness: number;        // 0-100
+  runDefenseRating: number;    // Rating contra carrera
+  passDefenseRating: number;   // Rating contra pase
+  versatility: number;         // Versatilidad de la formación
+  strengths: string[];         // Fortalezas
+  weaknesses: string[];        // Debilidades
+}
+
+// Resultado de cobertura de pase
+export interface PassCoverage {
+  type: 'pass_coverage';
+  coverageType: 'cover_0' | 'cover_1' | 'cover_2' | 'cover_3' | 'cover_4' | 'tampa_2' | 'robber' | 'bracket' | 'banjo';
+  effectiveness: number;        // 0-100
+  deepCoverage: number;        // Rating de cobertura profunda
+  shortCoverage: number;       // Rating de cobertura corta
+  blitzVulnerability: number;  // Vulnerabilidad al blitz
+  vulnerabilities: string[];   // Puntos débiles
+}
+
+// Resultado de acción del quarterback
+export interface QuarterbackPlay {
+  type: 'quarterback_play';
+  optionType: 'rpo_run' | 'rpo_pass' | 'qb_keep' | 'qb_scramble' | 'bootleg' | 'rollout' | 'designed_run' | 'read_option';
+  yardsGained: number;
+  successful: boolean;
+  decisionQuality: 'poor' | 'fair' | 'good' | 'excellent';
+}
+
+// Spike del balón
+export interface SpikePlay {
+  type: 'spike';
+  timeRemaining: number;
+  clockStopped: boolean;
+  downUsed: boolean;
+}
+
+// QB se arrodilla
+export interface KneelDown {
+  type: 'kneel_down';
+  yardsGained: number;
+  timeConsumed: number;
+  gameEnding: boolean;
+}
+
 // ===== RESULTADO UNIFICADO =====
 
 export type PlayResult =
@@ -355,7 +414,13 @@ export type PlayResult =
   | KickoffResult
   | PuntResult
   | KickResult
-  | TwoPointConversion;
+  | TwoPointConversion
+  | TempoChange
+  | DefensiveFormation
+  | PassCoverage
+  | QuarterbackPlay
+  | SpikePlay
+  | KneelDown;
 
 // ===== ANÁLISIS DE RESULTADOS =====
 

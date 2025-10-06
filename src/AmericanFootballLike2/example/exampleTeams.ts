@@ -75,15 +75,15 @@ function adjustForPhysicalCondition(
 
   return {
     ...attributes,
-    strength: Math.max(1, Math.min(99, attributes.strength + adj.physical)),
-    speed: Math.max(1, Math.min(99, attributes.speed + adj.physical)),
-    agility: Math.max(1, Math.min(99, attributes.agility + adj.physical)),
-    stamina: Math.max(1, Math.min(99, attributes.stamina + adj.physical)),
-    awareness: Math.max(1, Math.min(99, attributes.awareness + adj.mental)),
-    intelligence: Math.max(1, Math.min(99, attributes.intelligence + adj.mental)),
-    composure: Math.max(1, Math.min(99, attributes.composure + adj.mental)),
-    throwing: Math.max(1, Math.min(99, attributes.throwing + adj.technical)),
-    catching: Math.max(1, Math.min(99, attributes.catching + adj.technical))
+    strength: Math.max(1, Math.min(100, attributes.strength + adj.physical)),
+    speed: Math.max(1, Math.min(100, attributes.speed + adj.physical)),
+    agility: Math.max(1, Math.min(100, attributes.agility + adj.physical)),
+    stamina: Math.max(1, Math.min(100, attributes.stamina + adj.physical)),
+    awareness: Math.max(1, Math.min(100, attributes.awareness + adj.mental)),
+    intelligence: Math.max(1, Math.min(100, attributes.intelligence + adj.mental)),
+    composure: Math.max(1, Math.min(100, attributes.composure + adj.mental)),
+    throwing: Math.max(1, Math.min(100, attributes.throwing + adj.technical)),
+    catching: Math.max(1, Math.min(100, attributes.catching + adj.technical))
   };
 }
 
@@ -102,11 +102,11 @@ function createPlayerWithPosition(
   const isDefensive = ['DE', 'DT', 'NT', 'OLB', 'ILB', 'CB', 'SS', 'FS'].includes(position);
 
   if (teamFocus === 'offensive' && isOffensive) {
-    attributes.throwing += 5;
-    attributes.catching += 5;
+    attributes.throwing = Math.min(100, attributes.throwing + 5);
+    attributes.catching = Math.min(100, attributes.catching + 5);
   } else if (teamFocus === 'defensive' && isDefensive) {
-    attributes.strength += 5;
-    attributes.tackling += 5;
+    attributes.strength = Math.min(100, attributes.strength + 5);
+    attributes.tackling = Math.min(100, attributes.tackling + 5);
   }
 
   attributes = adjustForPhysicalCondition(attributes, physicalCondition);
@@ -395,11 +395,11 @@ export function createTeamWithCondition(
 
 // Funcion para mostrar estadisticas completas de un equipo
 export function showTeamStats(team: TeamMatch): void {
-  console.log(`\n=== ${team.name} ===`);
+  console.log(`\n=== ${team.name} - ANÁLISIS COMPLETO ===`);
 
   const players = team.players;
 
-  // Posiciones ofensivas
+  // Información básica del roster
   const qbs = players.filter(p => p.position === 'QB');
   const rbs = players.filter(p => p.position === 'RB');
   const wrs = players.filter(p => p.position === 'WR');
@@ -407,47 +407,115 @@ export function showTeamStats(team: TeamMatch): void {
   const centers = players.filter(p => p.position === 'C');
   const guards = players.filter(p => p.position === 'G');
   const tackles = players.filter(p => p.position === 'T');
-
-  // Posiciones defensivas
   const des = players.filter(p => p.position === 'DE');
   const dts = players.filter(p => p.position === 'DT');
   const olbs = players.filter(p => p.position === 'OLB');
   const ilbs = players.filter(p => p.position === 'ILB');
   const cbs = players.filter(p => p.position === 'CB');
   const safeties = players.filter(p => ['SS', 'FS'].includes(p.position));
-
-  // Equipos especiales
   const kickers = players.filter(p => p.position === 'K');
   const punters = players.filter(p => p.position === 'P');
 
-  console.log(`Total jugadores: ${players.length}`);
-  console.log(`\nOfensiva:`);
-  console.log(`  QBs: ${qbs.length}, RBs: ${rbs.length}, WRs: ${wrs.length}, TEs: ${tes.length}`);
-  console.log(`  OL: C(${centers.length}), G(${guards.length}), T(${tackles.length}) = ${centers.length + guards.length + tackles.length} total`);
-  console.log(`\nDefensiva:`);
-  console.log(`  DL: DE(${des.length}), DT(${dts.length}) = ${des.length + dts.length} total`);
-  console.log(`  LB: OLB(${olbs.length}), ILB(${ilbs.length}) = ${olbs.length + ilbs.length} total`);
-  console.log(`  DB: CB(${cbs.length}), S(${safeties.length}) = ${cbs.length + safeties.length} total`);
-  console.log(`\nEquipos Especiales:`);
-  console.log(`  K: ${kickers.length}, P: ${punters.length}`);
+  console.log(`📊 ROSTER: ${players.length} jugadores totales`);
+  console.log(`   Ofensiva: QB(${qbs.length}) RB(${rbs.length}) WR(${wrs.length}) TE(${tes.length}) OL(${centers.length + guards.length + tackles.length})`);
+  console.log(`   Defensiva: DL(${des.length + dts.length}) LB(${olbs.length + ilbs.length}) DB(${cbs.length + safeties.length})`);
+  console.log(`   Especiales: K(${kickers.length}) P(${punters.length})`);
 
-  console.log('\nRatings del equipo:');
-  console.log(`Rating General: ${team.getOverallRating().toFixed(1)}`);
-  console.log(`Rating Ofensivo: ${team.getOffensiveRating().toFixed(1)}`);
-  console.log(`Rating Defensivo: ${team.getDefensiveRating().toFixed(1)}`);
-  console.log(`Rating Equipos Especiales: ${team.getSpecialTeamsRating().toFixed(1)}`);
+  // Obtener atributos completos del equipo
+  const completeAttributes = team.getCompleteTeamAttributes();
 
-  console.log('\nFortalezas del equipo:');
+  console.log(`\n🏈 RATINGS GENERALES:`);
+  console.log(`   Overall: ${team.getOverallRating().toFixed(1)}`);
+  console.log(`   Ofensivo: ${team.getOffensiveRating().toFixed(1)}`);
+  console.log(`   Defensivo: ${team.getDefensiveRating().toFixed(1)}`);
+  console.log(`   Equipos Especiales: ${team.getSpecialTeamsRating().toFixed(1)}`);
+
+  // Mostrar atributos ofensivos detallados
+  console.log(`\n📈 ATRIBUTOS OFENSIVOS DETALLADOS:`);
+  const offensiveAttrs = completeAttributes.offensive;
+  console.log(`   Pase:`);
+  console.log(`     • Precisión de Pase: ${offensiveAttrs.passingAccuracy.toFixed(1)}`);
+  console.log(`     • Separación de Receptores: ${offensiveAttrs.receiverSeparation.toFixed(1)}`);
+  console.log(`     • Protección de Pase: ${offensiveAttrs.passProtectionAnchor.toFixed(1)}`);
+
+  console.log(`   Carrera:`);
+  console.log(`     • Bloqueo de Poder: ${offensiveAttrs.powerRunBlocking.toFixed(1)}`);
+  console.log(`     • Agilidad de Zona: ${offensiveAttrs.zoneBlockingAgility.toFixed(1)}`);
+  console.log(`     • Habilidad Explosiva: ${offensiveAttrs.breakawayAbility.toFixed(1)}`);
+
+  console.log(`   Situaciones Especiales:`);
+  console.log(`     • Eficiencia en Zona Roja: ${offensiveAttrs.redZoneEfficiency.toFixed(1)}`);
+  console.log(`     • Conversiones de Tercero: ${offensiveAttrs.thirdDownConversion.toFixed(1)}`);
+
+  // Mostrar atributos defensivos detallados
+  console.log(`\n🛡️ ATRIBUTOS DEFENSIVOS DETALLADOS:`);
+  const defensiveAttrs = completeAttributes.defensive;
+  console.log(`   Contra Carrera:`);
+  console.log(`     • Disciplina vs Carrera: ${defensiveAttrs.runFitDiscipline.toFixed(1)}`);
+  console.log(`     • Tackles por Pérdida: ${defensiveAttrs.tacklesForLoss.toFixed(1)}`);
+
+  console.log(`   Contra Pase:`);
+  console.log(`     • Cobertura Man: ${defensiveAttrs.pressManCoverage.toFixed(1)}`);
+  console.log(`     • Coordinación de Zona: ${defensiveAttrs.zoneCoverageCoordination.toFixed(1)}`);
+  console.log(`     • Presión con 4: ${defensiveAttrs.fourManRushPressure.toFixed(1)}`);
+
+  console.log(`   Situaciones Especiales:`);
+  console.log(`     • Defensa de Zona Roja: ${defensiveAttrs.redZoneDefense.toFixed(1)}`);
+  console.log(`     • Generación de Turnovers: ${defensiveAttrs.turnoverGeneration.toFixed(1)}`);
+
+  // Mostrar atributos de equipos especiales detallados
+  console.log(`\n⚡ EQUIPOS ESPECIALES DETALLADOS:`);
+  const specialAttrs = completeAttributes.specialTeams;
+  console.log(`   Pateo:`);
+  console.log(`     • Rango de Pateador: ${specialAttrs.kickerRange.toFixed(1)}`);
+  console.log(`     • Compostura de Pateador: ${specialAttrs.kickerComposure.toFixed(1)}`);
+  console.log(`     • Colocación de Despeje: ${specialAttrs.punterPlacement.toFixed(1)}`);
+  console.log(`     • Tiempo de Vuelo: ${specialAttrs.punterHangTime.toFixed(1)}`);
+
+  console.log(`   Cobertura y Retornos:`);
+  console.log(`     • Velocidad de Cobertura: ${specialAttrs.coverageSpeed.toFixed(1)}`);
+  console.log(`     • Explosividad de Retorno: ${specialAttrs.returnExplosiveness.toFixed(1)}`);
+  console.log(`     • Seguridad del Balón: ${specialAttrs.ballSecurity.toFixed(1)}`);
+
+  // Mostrar fortalezas y debilidades específicas
+  console.log(`\n💪 TOP 5 FORTALEZAS:`);
   const strengths = team.getTeamStrengths();
-  strengths.slice(0, 5).forEach((strength: any) => {
-    console.log(`- ${strength.category}: ${strength.attribute} (${strength.rating.toFixed(1)} - ${strength.evaluation.qualitativeRating})`);
+  strengths.slice(0, 5).forEach((strength: any, index: number) => {
+    console.log(`   ${index + 1}. ${strength.attribute}: ${strength.rating.toFixed(1)} (${strength.evaluation.qualitativeRating})`);
   });
 
-  console.log('\nDebilidades del equipo:');
+  console.log(`\n⚠️ TOP 5 DEBILIDADES:`);
   const weaknesses = team.getTeamWeaknesses();
-  weaknesses.slice(0, 5).forEach((weakness: any) => {
-    console.log(`- ${weakness.category}: ${weakness.attribute} (${weakness.rating.toFixed(1)} - ${weakness.evaluation.qualitativeRating})`);
+  weaknesses.slice(0, 5).forEach((weakness: any, index: number) => {
+    console.log(`   ${index + 1}. ${weakness.attribute}: ${weakness.rating.toFixed(1)} (${weakness.evaluation.qualitativeRating})`);
   });
+
+  // Mostrar análisis de trabajo en equipo si está disponible
+  const detailedAnalysis = team.getDetailedTeamAnalysis();
+  if (detailedAnalysis && detailedAnalysis.teamworkAnalysis) {
+    console.log(`\n🤝 ANÁLISIS DE TRABAJO EN EQUIPO:`);
+    const teamwork = detailedAnalysis.teamworkAnalysis;
+    console.log(`   Multiplicador de Sinergia: ${teamwork.synergyMultiplier.toFixed(2)}`);
+
+    if (teamwork.fiveCs) {
+      console.log(`   Las 5 C's del Trabajo en Equipo:`);
+      console.log(`     • Comunicación: ${teamwork.fiveCs.communication.toFixed(1)}`);
+      console.log(`     • Coordinación: ${teamwork.fiveCs.coordination.toFixed(1)}`);
+      console.log(`     • Cooperación: ${teamwork.fiveCs.cooperation.toFixed(1)}`);
+      console.log(`     • Confianza: ${teamwork.fiveCs.confidence.toFixed(1)}`);
+      console.log(`     • Compromiso: ${teamwork.fiveCs.commitment.toFixed(1)}`);
+    }
+
+    if (teamwork.cohesionFactors) {
+      console.log(`   Factores de Cohesión:`);
+      console.log(`     • Tiempo Juntos: ${teamwork.cohesionFactors.timeTogetherBonus.toFixed(1)}`);
+      console.log(`     • Adversidades Superadas: ${teamwork.cohesionFactors.adversityOvercome.toFixed(1)}`);
+      console.log(`     • Éxitos Compartidos: ${teamwork.cohesionFactors.successesShared.toFixed(1)}`);
+      console.log(`     • Cultura del Vestuario: ${teamwork.cohesionFactors.locker_room_culture.toFixed(1)}`);
+    }
+  }
+
+  console.log(`\n${'='.repeat(50)}`);
 }
 
 // Función para comparar dos equipos

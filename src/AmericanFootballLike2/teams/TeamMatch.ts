@@ -878,7 +878,7 @@ TeamMatch.prototype.createOffensiveAction = function (
     };
 } {
     // Usar el CoachingStaff para crear la action
-    const staffDecision = this.coachingStaff.createOffensiveAction(offense, defense, situation);
+    const staffDecision = this.coachingStaff.createOffensiveDecision(offense, defense, situation);
 
     // Aplicar bonus de atributos del equipo
     let teamBonus = 0;
@@ -1055,8 +1055,10 @@ TeamMatch.prototype.createDefensiveResponse = function (
     }
 
     // Aplicar bonus del equipo a los ajustes
-    const finalAdjustments = { ...staffResponse.adjustments };
-    finalAdjustments.adjustmentBonus += teamBonus;
+    const finalAdjustments = [...staffResponse.adjustments];
+    if (teamBonus > 0) {
+        finalAdjustments.push(`team_bonus_${teamBonus.toFixed(1)}`);
+    }
 
     return {
         adjustments: finalAdjustments,

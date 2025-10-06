@@ -242,18 +242,75 @@ export interface RunDefenseAssignment {
 
 // ===== ACCIONES ESPECIALES =====
 
-// Jugadas de Engaño
+// Equipos Especiales - Kickoffs
+export type KickoffType = 
+    | 'normal_kickoff'     // Kickoff normal
+    | 'onside_kick'        // Patada corta
+    | 'squib_kick'         // Patada baja
+    | 'touchback_kick';    // Patada para touchback
+
+export interface KickoffAction {
+    actionType: 'kickoff';
+    kickoffType: KickoffType;
+    targetArea: 'deep' | 'short' | 'sideline' | 'middle';
+    
+    // Características
+    surpriseFactor: number;        // Factor sorpresa para onside (0-100)
+    hangTime: number;              // Tiempo en el aire esperado
+    kickerStrength: number;        // Fuerza del pateador (0-100)
+}
+
+// Equipos Especiales - Punts
+export type PuntType =
+    | 'normal_punt'        // Punt normal
+    | 'fake_punt'          // Engaño de punt
+    | 'coffin_corner'      // Punt a la esquina
+    | 'rugby_punt'         // Punt estilo rugby
+    | 'quick_punt';        // Punt rápido
+
+export interface PuntAction {
+    actionType: 'punt';
+    puntType: PuntType;
+    targetArea: 'deep' | 'corner' | 'sideline' | 'middle';
+    
+    // Características para fake punt
+    fakePlayType?: RunningPlayType | PassingPlayType;
+    surpriseFactor: number;        // Factor sorpresa para fake (0-100)
+    hangTime: number;              // Tiempo en el aire esperado
+    punterStrength: number;        // Fuerza del punter (0-100)
+}
+
+// Equipos Especiales - Field Goals
+export type FieldGoalType =
+    | 'normal_field_goal'  // Field goal normal
+    | 'fake_field_goal'    // Engaño de field goal
+    | 'extra_point'        // Punto extra
+    | 'two_point_attempt'; // Intento de 2 puntos
+
+export interface FieldGoalAction {
+    actionType: 'field_goal';
+    fieldGoalType: FieldGoalType;
+    distance: number;              // Distancia en yardas
+    
+    // Características para fake
+    fakePlayType?: RunningPlayType | PassingPlayType;
+    surpriseFactor: number;        // Factor sorpresa para fake (0-100)
+    kickerAccuracy: number;        // Precisión del pateador (0-100)
+    kickerRange: number;           // Rango del pateador (0-100)
+}
+
+// Jugadas de Engaño/Trick Plays
 export type TrickPlay =
-    | 'flea_flicker'   // Entrega-lateral-pase
-    | 'double_pass'    // Doble pase
-    | 'reverse'        // Reversa
-    | 'halfback_pass'  // Pase del halfback
-    | 'fake_punt'      // Engaño de despeje
-    | 'fake_fg'        // Engaño de gol de campo
-    | 'onside_kick'    // Patada corta
-    | 'squib_kick';    // Patada baja
+    | 'flea_flicker'       // Entrega-lateral-pase
+    | 'double_pass'        // Doble pase
+    | 'reverse'            // Reversa
+    | 'halfback_pass'      // Pase del halfback
+    | 'statue_of_liberty'  // Estatua de la libertad
+    | 'hook_and_ladder'    // Hook and ladder
+    | 'fumblerooski';      // Fumblerooski
 
 export interface TrickPlayAction {
+    actionType: 'trick_play';
     playType: TrickPlay;
     keyPlayers: Player[];
 
@@ -261,6 +318,24 @@ export interface TrickPlayAction {
     surpriseFactor: number;        // Factor sorpresa (0-100)
     successProbability: number;    // Probabilidad de éxito (0-100)
     riskLevel: 'medium' | 'high' | 'extreme';
+    expectedYards: number;         // Yardas esperadas si funciona
+}
+
+// Jugadas Especiales de Situación
+export type SituationalPlayType =
+    | 'kneel'              // Arrodillarse
+    | 'spike'              // Clavar el balón
+    | 'safety_kick'        // Patada después de safety
+    | 'fair_catch_kick';   // Patada después de fair catch
+
+export interface SituationalPlayAction {
+    actionType: 'situational';
+    playType: SituationalPlayType;
+    purpose: 'clock_management' | 'field_position' | 'score_attempt' | 'safety_protocol';
+    
+    // Características específicas
+    timeImpact: number;            // Impacto en el tiempo de juego
+    riskLevel: 'low' | 'medium';
 }
 
 // ===== RESULTADOS DE ACCIONES =====
