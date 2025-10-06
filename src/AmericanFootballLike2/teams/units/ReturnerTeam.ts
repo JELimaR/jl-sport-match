@@ -43,41 +43,41 @@ export class ReturnerTeam extends TeamCamp {
         if (this.returnerTeamType === 'kickoff_return') {
             baseAttributes = {
                 returnExplosiveness: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.speed + p.attributes.agility, 0) / returners.length : 70,
+                    returners.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.agility) / 2, 0) / returners.length : 70,
                 ballSecurity: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.strength + p.attributes.composure, 0) / returners.length : 70,
+                    returners.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.composure) / 2, 0) / returners.length : 70,
                 blockingAbility: blockers.length > 0 ? 
-                    blockers.reduce((sum, p) => sum + p.attributes.blocking + p.attributes.speed, 0) / blockers.length : 70,
+                    blockers.reduce((sum, p) => sum + (p.attributes.blocking + p.attributes.speed) / 2, 0) / blockers.length : 70,
                 fieldVision: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.awareness + p.attributes.intelligence, 0) / returners.length : 70,
+                    returners.reduce((sum, p) => sum + (p.attributes.awareness + p.attributes.intelligence) / 2, 0) / returners.length : 70,
                 returnCoordination: this.players.length > 0 ? 
-                    this.players.reduce((sum, p) => sum + p.attributes.awareness + p.attributes.intelligence, 0) / this.players.length : 70
+                    this.players.reduce((sum, p) => sum + (p.attributes.awareness + p.attributes.intelligence) / 2, 0) / this.players.length : 70
             };
         } else if (this.returnerTeamType === 'punt_return') {
             baseAttributes = {
                 returnExplosiveness: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.speed + p.attributes.agility, 0) / returners.length : 70,
+                    returners.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.agility) / 2, 0) / returners.length : 70,
                 ballSecurity: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.strength + p.attributes.composure, 0) / returners.length : 70,
+                    returners.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.composure) / 2, 0) / returners.length : 70,
                 fieldVision: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.awareness + p.attributes.intelligence, 0) / returners.length : 70,
+                    returners.reduce((sum, p) => sum + (p.attributes.awareness + p.attributes.intelligence) / 2, 0) / returners.length : 70,
                 puntRushAbility: rushers.length > 0 ? 
-                    rushers.reduce((sum, p) => sum + p.attributes.speed + p.attributes.strength, 0) / rushers.length : 70,
+                    rushers.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.strength) / 2, 0) / rushers.length : 70,
                 catchingAbility: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.catching + p.attributes.awareness, 0) / returners.length : 70
+                    returners.reduce((sum, p) => sum + (p.attributes.catching + p.attributes.awareness) / 2, 0) / returners.length : 70
             };
         } else if (this.returnerTeamType === 'field_goal_defense' || this.returnerTeamType === 'extra_point_defense') {
             baseAttributes = {
                 blockingAbility: rushers.length > 0 ? 
-                    rushers.reduce((sum, p) => sum + p.attributes.strength + p.attributes.speed, 0) / rushers.length : 70,
+                    rushers.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.speed) / 2, 0) / rushers.length : 70,
                 jumpingAbility: this.players.length > 0 ? 
-                    this.players.reduce((sum, p) => sum + p.attributes.agility + p.attributes.strength, 0) / this.players.length : 70,
+                    this.players.reduce((sum, p) => sum + (p.attributes.agility + p.attributes.strength) / 2, 0) / this.players.length : 70,
                 rushCoordination: rushers.length > 0 ? 
-                    rushers.reduce((sum, p) => sum + p.attributes.awareness + p.attributes.intelligence, 0) / rushers.length : 70,
+                    rushers.reduce((sum, p) => sum + (p.attributes.awareness + p.attributes.intelligence) / 2, 0) / rushers.length : 70,
                 penetrationSpeed: rushers.length > 0 ? 
-                    rushers.reduce((sum, p) => sum + p.attributes.speed + p.attributes.agility, 0) / rushers.length : 70,
+                    rushers.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.agility) / 2, 0) / rushers.length : 70,
                 returnThreat: returners.length > 0 ? 
-                    returners.reduce((sum, p) => sum + p.attributes.speed + p.attributes.agility, 0) / returners.length : 70
+                    returners.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.agility) / 2, 0) / returners.length : 70
             };
         }
 

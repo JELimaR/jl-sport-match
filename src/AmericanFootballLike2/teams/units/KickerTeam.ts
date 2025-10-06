@@ -45,41 +45,41 @@ export class KickerTeam extends TeamCamp {
         if (this.kickerTeamType === 'kickoff') {
             baseAttributes = {
                 kickerRange: kickers.length > 0 ? 
-                    kickers[0].attributes.kickPower + kickers[0].attributes.kickAccuracy : 70,
+                    (kickers[0].attributes.kickPower + kickers[0].attributes.kickAccuracy) / 2 : 70,
                 kickerComposure: kickers.length > 0 ? 
-                    kickers[0].attributes.composure + kickers[0].attributes.awareness : 70,
+                    (kickers[0].attributes.composure + kickers[0].attributes.awareness) / 2 : 70,
                 coverageSpeed: coverage.length > 0 ? 
-                    coverage.reduce((sum, p) => sum + p.attributes.speed + p.attributes.tackling, 0) / coverage.length : 70,
+                    coverage.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.tackling) / 2, 0) / coverage.length : 70,
                 kickoffHangTime: kickers.length > 0 ? 
-                    kickers[0].attributes.kickPower + kickers[0].attributes.kickAccuracy : 70
+                    (kickers[0].attributes.kickPower + kickers[0].attributes.kickAccuracy) / 2 : 70
             };
         } else if (this.kickerTeamType === 'punt') {
             baseAttributes = {
                 punterPlacement: punters.length > 0 ? 
-                    punters[0].attributes.kickAccuracy + punters[0].attributes.awareness : 70,
+                    (punters[0].attributes.kickAccuracy + punters[0].attributes.awareness) / 2 : 70,
                 punterHangTime: punters.length > 0 ? 
-                    punters[0].attributes.kickPower + punters[0].attributes.kickAccuracy : 70,
+                    (punters[0].attributes.kickPower + punters[0].attributes.kickAccuracy) / 2 : 70,
                 longSnapAccuracy: longSnappers.length > 0 ? 
-                    longSnappers[0].attributes.kickAccuracy + longSnappers[0].attributes.awareness : 
-                    (centers.length > 0 ? centers[0].attributes.kickAccuracy + centers[0].attributes.awareness : 70),
+                    (longSnappers[0].attributes.kickAccuracy + longSnappers[0].attributes.awareness) / 2 : 
+                    (centers.length > 0 ? (centers[0].attributes.kickAccuracy + centers[0].attributes.awareness) / 2 : 70),
                 coverageSpeed: coverage.length > 0 ? 
-                    coverage.reduce((sum, p) => sum + p.attributes.speed + p.attributes.tackling, 0) / coverage.length : 70,
+                    coverage.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.tackling) / 2, 0) / coverage.length : 70,
                 puntProtection: coverage.length > 0 ? 
-                    coverage.reduce((sum, p) => sum + p.attributes.blocking + p.attributes.awareness, 0) / coverage.length : 70
+                    coverage.reduce((sum, p) => sum + (p.attributes.blocking + p.attributes.awareness) / 2, 0) / coverage.length : 70
             };
         } else if (this.kickerTeamType === 'field_goal' || this.kickerTeamType === 'extra_point') {
             baseAttributes = {
                 kickerRange: kickers.length > 0 ? 
-                    kickers[0].attributes.kickPower + kickers[0].attributes.kickAccuracy : 70,
+                    (kickers[0].attributes.kickPower + kickers[0].attributes.kickAccuracy) / 2 : 70,
                 kickerComposure: kickers.length > 0 ? 
-                    kickers[0].attributes.composure + kickers[0].attributes.awareness : 70,
+                    (kickers[0].attributes.composure + kickers[0].attributes.awareness) / 2 : 70,
                 kickerAccuracy: kickers.length > 0 ? 
-                    kickers[0].attributes.kickAccuracy * 2 : 70,
+                    kickers[0].attributes.kickAccuracy : 70,
                 longSnapAccuracy: longSnappers.length > 0 ? 
-                    longSnappers[0].attributes.kickAccuracy + longSnappers[0].attributes.awareness : 
-                    (centers.length > 0 ? centers[0].attributes.kickAccuracy + centers[0].attributes.awareness : 70),
+                    (longSnappers[0].attributes.kickAccuracy + longSnappers[0].attributes.awareness) / 2 : 
+                    (centers.length > 0 ? (centers[0].attributes.kickAccuracy + centers[0].attributes.awareness) / 2 : 70),
                 fieldGoalProtection: coverage.length > 0 ? 
-                    coverage.reduce((sum, p) => sum + p.attributes.blocking + p.attributes.strength, 0) / coverage.length : 70
+                    coverage.reduce((sum, p) => sum + (p.attributes.blocking + p.attributes.strength) / 2, 0) / coverage.length : 70
             };
         }
 

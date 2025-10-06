@@ -36,28 +36,28 @@ export class DefensiveTeam extends TeamCamp {
         // Calcular atributos base de los jugadores
         const frontSeven = [...dl, ...lbs];
         const baseRunFitDiscipline = frontSeven.length > 0 ? 
-            frontSeven.reduce((sum, p) => sum + p.attributes.tackling + p.attributes.awareness, 0) / frontSeven.length : 70;
+            frontSeven.reduce((sum, p) => sum + (p.attributes.tackling + p.attributes.awareness) / 2, 0) / frontSeven.length : 70;
 
         const baseTacklesForLoss = frontSeven.length > 0 ? 
-            frontSeven.reduce((sum, p) => sum + p.attributes.strength + p.attributes.tackling, 0) / frontSeven.length : 70;
+            frontSeven.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.tackling) / 2, 0) / frontSeven.length : 70;
 
         const coverage = [...lbs, ...dbs];
         const baseZoneCoverageCoordination = coverage.length > 0 ? 
-            coverage.reduce((sum, p) => sum + p.attributes.coverage + p.attributes.awareness, 0) / coverage.length : 70;
+            coverage.reduce((sum, p) => sum + (p.attributes.coverage + p.attributes.awareness) / 2, 0) / coverage.length : 70;
 
         const allDefensive = [...dl, ...lbs, ...dbs];
         const baseTurnoverGeneration = allDefensive.length > 0 ? 
-            allDefensive.reduce((sum, p) => sum + p.attributes.awareness + p.attributes.agility, 0) / allDefensive.length : 70;
+            allDefensive.reduce((sum, p) => sum + (p.attributes.awareness + p.attributes.agility) / 2, 0) / allDefensive.length : 70;
 
         const baseFourManRushPressure = dl.length > 0 ? 
-            dl.reduce((sum, p) => sum + p.attributes.strength + p.attributes.speed, 0) / dl.length : 70;
+            dl.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.speed) / 2, 0) / dl.length : 70;
 
         const cbs = dbs.filter(p => p.position === 'CB');
         const basePressManCoverage = cbs.length > 0 ? 
-            cbs.reduce((sum, p) => sum + p.attributes.coverage + p.attributes.speed, 0) / cbs.length : 70;
+            cbs.reduce((sum, p) => sum + (p.attributes.coverage + p.attributes.speed) / 2, 0) / cbs.length : 70;
 
         const baseRedZoneDefense = allDefensive.length > 0 ? 
-            allDefensive.reduce((sum, p) => sum + p.attributes.tackling + p.attributes.strength, 0) / allDefensive.length : 70;
+            allDefensive.reduce((sum, p) => sum + (p.attributes.tackling + p.attributes.strength) / 2, 0) / allDefensive.length : 70;
 
         // Aplicar efectos del coaching staff
         let coachingBonus = 0;

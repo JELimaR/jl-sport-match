@@ -154,13 +154,37 @@ export class TeamAttributeSystem {
         const invalidAttrs = allAttributes.filter(attr => attr < 0 || attr > 100);
 
         if (invalidAttrs.length > 0) {
-            throw new Error(`Atributos inválidos para ${this.teamName}. Deben estar entre 0-100`);
+            console.warn(`⚠️ Atributos fuera de rango para ${this.teamName}:`, invalidAttrs);
+            // Corregir atributos fuera de rango en lugar de fallar
+            this.clampAttributes();
         }
 
         // Validar netTurnoverMargin que tiene rango especial
         if (this.attributes.general.netTurnoverMargin < -50 || this.attributes.general.netTurnoverMargin > 50) {
             throw new Error(`Net Turnover Margin inválido para ${this.teamName}. Debe estar entre -50 y +50`);
         }
+    }
+
+    /**
+     * Corrige atributos que están fuera del rango válido
+     */
+    private clampAttributes(): void {
+        // Función auxiliar para corregir un objeto de atributos
+        const clampObject = (obj: any) => {
+            for (const key in obj) {
+                if (typeof obj[key] === 'number' && key !== 'netTurnoverMargin') {
+                    obj[key] = Math.max(0, Math.min(100, obj[key]));
+                }
+            }
+        };
+
+        clampObject(this.attributes.offensive);
+        clampObject(this.attributes.defensive);
+        clampObject(this.attributes.specialTeams);
+        clampObject(this.attributes.general);
+
+        // Corregir netTurnoverMargin por separado
+        this.attributes.general.netTurnoverMargin = Math.max(-50, Math.min(50, this.attributes.general.netTurnoverMargin));
     }
 
     /**

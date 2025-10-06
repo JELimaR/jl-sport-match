@@ -35,31 +35,31 @@ export class OffensiveTeam extends TeamCamp {
         const rbs = this.getRunningBacks();
 
         // Calcular atributos base de los jugadores
-        const basePowerRunBlocking = ol.length > 0 ? 
-            ol.reduce((sum, p) => sum + p.attributes.strength + p.attributes.blocking, 0) / ol.length : 70;
+        const basePowerRunBlocking = ol.length > 0 ?
+            ol.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.blocking) / 2, 0) / ol.length : 70;
 
-        const baseZoneBlockingAgility = ol.length > 0 ? 
-            ol.reduce((sum, p) => sum + p.attributes.agility + p.attributes.blocking, 0) / ol.length : 70;
+        const baseZoneBlockingAgility = ol.length > 0 ?
+            ol.reduce((sum, p) => sum + (p.attributes.agility + p.attributes.blocking) / 2, 0) / ol.length : 70;
 
-        const basePassingAccuracy = qb ? qb.attributes.throwing + qb.attributes.awareness : 70;
+        const basePassingAccuracy = qb ? (qb.attributes.throwing + qb.attributes.awareness) / 2 : 70;
 
-        const baseReceiverSeparation = receivers.length > 0 ? 
-            receivers.reduce((sum, p) => sum + p.attributes.speed + p.attributes.agility, 0) / receivers.length : 70;
+        const baseReceiverSeparation = receivers.length > 0 ?
+            receivers.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.agility) / 2, 0) / receivers.length : 70;
 
         const skillPlayers = [...rbs, ...receivers];
-        const baseBreakawayAbility = skillPlayers.length > 0 ? 
-            skillPlayers.reduce((sum, p) => sum + p.attributes.speed + p.attributes.agility, 0) / skillPlayers.length : 70;
+        const baseBreakawayAbility = skillPlayers.length > 0 ?
+            skillPlayers.reduce((sum, p) => sum + (p.attributes.speed + p.attributes.agility) / 2, 0) / skillPlayers.length : 70;
 
-        const basePassProtectionAnchor = ol.length > 0 ? 
-            ol.reduce((sum, p) => sum + p.attributes.strength + p.attributes.blocking, 0) / ol.length : 70;
+        const basePassProtectionAnchor = ol.length > 0 ?
+            ol.reduce((sum, p) => sum + (p.attributes.strength + p.attributes.blocking) / 2, 0) / ol.length : 70;
 
-        const baseThirdDownConversion = qb && receivers.length > 0 ? 
-            (qb.attributes.awareness + qb.attributes.throwing + 
-             receivers.reduce((sum, p) => sum + p.attributes.catching + p.attributes.agility, 0) / receivers.length) / 3 : 70;
+        const baseThirdDownConversion = qb && receivers.length > 0 ?
+            ((qb.attributes.awareness + qb.attributes.throwing) / 2 +
+                receivers.reduce((sum, p) => sum + (p.attributes.catching + p.attributes.agility) / 2, 0) / receivers.length) / 2 : 70;
 
         const allOffensive = [qb, ...ol, ...receivers, ...rbs].filter(p => p !== undefined) as Player[];
-        const baseRedZoneEfficiency = allOffensive.length > 0 ? 
-            allOffensive.reduce((sum, p) => sum + p.attributes.composure + p.attributes.awareness, 0) / allOffensive.length : 70;
+        const baseRedZoneEfficiency = allOffensive.length > 0 ?
+            allOffensive.reduce((sum, p) => sum + (p.attributes.composure + p.attributes.awareness) / 2, 0) / allOffensive.length : 70;
 
         // Aplicar efectos del coaching staff
         let coachingBonus = 0;
@@ -68,7 +68,7 @@ export class OffensiveTeam extends TeamCamp {
             if (offensiveCoordinator) {
                 // Bonus basado en la experiencia y habilidades del coordinador ofensivo
                 coachingBonus = (offensiveCoordinator.attributes.experience + offensiveCoordinator.attributes.leadership + offensiveCoordinator.attributes.intelligence) / 15; // 0-20 puntos
-                
+
                 // Bonus específicos por especialización
                 // Bonus basado en tendencias del coordinador
                 if (offensiveCoordinator.attributes.passingTendency > 40 && offensiveCoordinator.attributes.passingTendency < 60) {
@@ -88,15 +88,15 @@ export class OffensiveTeam extends TeamCamp {
         if (this.teamworkProfiles && this.teamworkSystem && this.teamworkProfiles.length > 0) {
             // Calcular sinergia entre jugadores en campo
             const playersInUnit = this.players.map(p => p.id);
-            const relevantProfiles = this.teamworkProfiles.filter(profile => 
+            const relevantProfiles = this.teamworkProfiles.filter(profile =>
                 playersInUnit.includes(profile.playerId)
             );
 
             if (relevantProfiles.length > 0) {
                 // Calcular química ofensiva basada en las 5 C's
-                const avgChemistry = relevantProfiles.reduce((sum, profile) => 
+                const avgChemistry = relevantProfiles.reduce((sum, profile) =>
                     sum + (profile.fiveCs.communication + profile.fiveCs.coordination + profile.fiveCs.cooperation + profile.fiveCs.commitment + profile.fiveCs.confidence) / 5, 0) / relevantProfiles.length;
-                
+
                 // Aplicar efectos del sistema de trabajo en equipo
                 const fiveCs = this.teamworkSystem.fiveCs;
                 if (fiveCs) {
