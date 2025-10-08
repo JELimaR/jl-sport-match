@@ -28,7 +28,7 @@ export interface OffensiveActionSet {
   primaryAction: RunningPlayAction | PassingPlayAction | KickoffAction | PuntAction | FieldGoalAction | TrickPlayAction | SituationalPlayAction;
   quarterbackAction?: QuarterbackAction;
   tempoAction?: TempoAction;
-  formation: string;
+  formation: string; // NO DEBE SER string
   personnel: string;
 }
 
@@ -37,9 +37,9 @@ export interface OffensiveActionSet {
  */
 export interface DefensiveActionSet {
   formationAction: DefensiveFormationAction;
-  coverageAction?: PassCoverageAction;
-  blitzAction?: any; // Por definir si es necesario
-  adjustments: string[];
+  coverageAction?: PassCoverageAction; // no debe ser opcional
+  blitzAction?: any; // Por definir si es necesario. SE DEBE DEFINIR EL TYPE
+  adjustments: string[]; // NO DEBE SER string
 }
 
 /**
