@@ -130,3 +130,99 @@ $$R_S = \left[ C_{\text{net}} \cdot (1 + \ln(1 + \sigma)) \right] \cdot \mathcal
 
 * 
 **$\xi_{\text{azar}}$:** Variable aleatoria con distribución $N(0, \gamma)$ que introduce la incertidumbre e imponderables propios del deporte.
+
+
+---
+
+Entiendo perfectamente la idea. Para capturar esa riqueza sin perder la abstracción, necesitamos evolucionar dos conceptos del modelo anterior:
+
+1. **El jugador ya no puede tener un talento escalar único ($C_i$):** Debe ser un **vector de capacidades** ($\vec{P}_i$).
+2. **La táctica ($T$) ya no es solo una matriz fija ($M_{\text{Táb}}$):** Se convierte en una **estructura de demandas** que exige ciertos perfiles, impone un consumo de recursos (físico, mental, técnico) y interactúa dinámicamente con el sistema rival.
+
+A continuación, presento la formalización matemática y conceptual de este módulo táctico.
+
+---
+
+# Formalización del Módulo Táctico-Estratégico y Adaptación Perfil-Rol
+
+## 1. Vectorización del Nodo (Perfil Multidimensional del Jugador)
+
+Sustituimos la capacidad escalar $C_i$ por un **Vector de Capacidades y Perfiles** ($\vec{P}_i \in \mathbb{R}^m$), donde $m$ es el número de dimensiones o facetas del juego (ej. físico, mental, técnico-ofensivo, técnico-defensivo, etc.):
+
+$$\vec{P}_i = \begin{bmatrix} p_{i, \text{físico}} \\ p_{i, \text{mental}} \\ p_{i, \text{ofensivo}} \\ p_{i, \text{defensivo}} \end{bmatrix}$$
+
+> **Principio de Neutralidad de Valor:** Ningún perfil $\vec{P}_i$ es intrínsecamente "malo" o "bueno". Su valor real solo se determina en relación con la demanda de la tarea asignada y la calidad del rival.
+
+---
+
+## 2. Definición del Esquema Táctico ($T$) como Matriz de Demandas
+
+Una estrategia $T$ asigna a cada nodo $i$ un **Vector de Demanda de Rol** ($\vec{D}_{i,T} \in \mathbb{R}^m$) y establece una **Tasa de Desgaste de Recursos** ($\vec{\Gamma}_T$).
+
+### 2.1. Vector de Demanda de Rol ($\vec{D}_{i,T}$)
+
+Define qué porcentaje de cada atributo exige la táctica a esa posición específica. Por ejemplo:
+
+* Un lateral con proyección ofensiva exigirá altos valores en $d_{\text{físico}}$ y $d_{\text{ofensivo}}$.
+* Un lateral posicional/conservador exigirá altos valores en $d_{\text{defensivo}}$ y $d_{\text{mental}}$.
+
+### 2.2. Cálculo Dinámico de la Afinidad de Rol ($A_i$)
+
+La **Afinidad de Rol** ($A_i$), que antes era una constante manual, ahora surge formalmente del ajuste (o desajuste) entre el perfil del jugador y la demanda del rol mediante una similitud coseno ponderada o producto escalar normalizado:
+
+$$A_i = \cos(\theta) = \frac{\vec{P}_i \cdot \vec{D}_{i,T}}{\Vert{}\vec{P}_i\Vert{} \Vert{}\vec{D}_{i,T}\Vert{}}$$
+
+* **Efecto de Desajuste:** Si un lateral defensivo ($\vec{P}_i$ volcado a lo defensivo) es forzado a cumplir un rol ofensivo ($\vec{D}_{i,T}$ volcado a lo ofensivo), el ángulo $\theta$ aumenta, reduciendo $A_i \to 0$.
+* Esto degrada inmediatamente la **Sinergia ($\sigma$)** y la **Capacidad Colectiva ($C_{\text{net}}$)** en sus enlaces contiguos, reflejando cómo la falla individual en un rol inapropiado desestabiliza a la línea.
+
+
+
+---
+
+## 3. Fricción y Costo de Ejecución Táctica ($\vec{\Gamma}_T$)
+
+Ninguna táctica es gratis. Estrategias más agresivas o complejas imponen exigencias que desgastan el **Estado Psicofísico ($E_i$)** a lo largo del tiempo $t$.
+
+Definimos la tasa de degradación de la entrega o energía como:
+
+$$\frac{dE_i}{dt} = - \left( \alpha \cdot \Vert{}\vec{D}_{i,T}_{\text{físico}}\Vert{} + \beta \cdot \Vert{}\vec{D}_{i,T}_{\text{mental}}\Vert{} \right) \cdot (2 - A_i)$$
+
+* **$\alpha, \beta$:** Coeficientes de desgaste del deporte.
+* **$(2 - A_i)$ (Factor de Ineficiencia):** Cuanto menor es la afinidad del jugador con su rol ($A_i$ bajo), más energía física y mental consume para intentar cumplir la tarea, acelerando su fatiga y caída de rendimiento ($E_i \to 0$).
+
+---
+
+## 4. Eficiencia Táctica Relativa y Colisión de Sistemas ($M_{\text{Táb}}$)
+
+Para formalizar que **ninguna estrategia es infalible** y que el nivel del rival condiciona el éxito de un desajuste táctico, redefinimos la Matriz de Enfrentamiento Táctico $M_{\text{Táb}}$ como una función del choque de intenciones y la efectividad de ejecución de ambos equipos ($A$ y $B$).
+
+### 4.1. Tensor de Enfrentamiento Estratégico ($\mathbf{\Theta}$)
+
+Representa la ventaja conceptual pura de un estilo sobre otro (estilo "Piedra, Papel o Tijera"):
+
+$$\mathbf{\Theta}(T_A, T_B) \in [-1, 1]$$
+
+### 4.2. Matriz del Matchup Real Integrado ($M_{\text{Táb}}$)
+
+La ventaja táctica efectiva no depende solo del pizarrón, sino de qué tan bien ejecuta cada equipo su estrategia frente a la del otro:
+
+$$M_{\text{Táb}}(A, B) = 1 + \left[ \mathbf{\Theta}(T_A, T_B) \cdot \left( \frac{\bar{A}_A}{\bar{A}_B} \right) \right] \cdot \left( \frac{\bar{C}_A}{\bar{C}_B} \right)^\delta$$
+
+* **$\frac{\bar{A}_A}{\bar{A}_B}$:** Relación de calidad de ejecución táctica (promedios de afinidad de rol $A_i$).
+* **$\left( \frac{\bar{C}_A}{\bar{C}_B} \right)^\delta$ (El Factor de Brecha Jerárquica):** Ponderación del nivel técnico/físico general entre ambos planteles.
+
+---
+
+## Resumen del Comportamiento del Sistema
+
+Con estas adiciones, el modelo responde exactamente a los escenarios reales que planteaste:
+
+| Escenario | Resultado en el Modelo |
+| --- | --- |
+| **Jugador defensivo usado en táctica ofensiva contra rival superior** | $A_i$ cae bruscamente por desajuste perfil-demanda. La fatiga $\frac{dE_i}{dt}$ se acelera. $C_{\text{net}}$ se desploma en su banda y el rival explota la brecha. |
+| **Jugador defensivo usado en táctica ofensiva contra rival muy débil** | Aunque $A_i$ es bajo, la brecha jerárquica $\frac{\bar{C}_A}{\bar{C}_B}$ es tan alta a favor de su equipo que compensa la ineficiencia táctica. El equipo gana igual sin que el jugador quede expuesto. |
+| **Táctica de alta presión e intensidad** | Ofrece un $\mathbf{\Theta}(T_A, T_B)$ alto contra tácticas de posesión lenta, pero impone una tasa de degradación $\frac{dE_i}{dt}$ muy elevada. Si el equipo no rota o no logra ventaja rápida, $E_i$ cae a niveles críticos ($\mathcal{E}_{\text{equipo}} \to 0$) al final del juego.
+
+ |
+
+ 
